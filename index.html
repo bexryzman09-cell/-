@@ -4,379 +4,1084 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Панель Управления Прогрессом</title>
-    <link rel="shortcut icon" href="/img/logo.png" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <title>Аналитика 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg: #05070a;
-            --card-bg: rgba(17, 25, 40, 0.75);
-            --text: #e2e8f0;
-            --accent: #00f2ff;
-            --accent-glow: rgba(0, 242, 255, 0.3);
-            --border: rgba(255, 255, 255, 0.1);
-            --up: #00ff88;
-            --down: #ff4d4d;
-            --glass: blur(16px) saturate(180%);
+            --bg: #05080f;
+            --s1: #0d1220;
+            --s2: #131c2e;
+            --b: rgba(255, 255, 255, 0.07);
+            --b2: rgba(255, 255, 255, 0.14);
+            --acc: #378ADD;
+            --acc2: #5DCAA5;
+            --tx: #e8edf5;
+            --mu: #6b7a99;
+            --upt: #a3d46b;
+            --dnt: #f09595;
+            --wnt: #FAC775;
+            --r: 14px;
+            --rs: 8px;
+            --f: 'JetBrains Mono', monospace;
         }
 
-        .light-theme {
-            --bg: #f8fafc;
-            --card-bg: rgba(255, 255, 255, 0.8);
-            --text: #0f172a;
-            --accent: #0ea5e9;
-            --border: rgba(0, 0, 0, 0.05);
+        .light {
+            --bg: #eef1f7;
+            --s1: #fff;
+            --s2: #f3f5fb;
+            --b: rgba(0, 0, 0, 0.07);
+            --b2: rgba(0, 0, 0, 0.14);
+            --tx: #0f172a;
+            --mu: #64748b;
         }
 
-        * {
+        *,
+        *::before,
+        *::after {
             box-sizing: border-box;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            margin: 0;
-            font-family: 'JetBrains Mono', monospace;
-            /* Тот самый прикольный шрифт */
+            font-family: var(--f);
             background: var(--bg);
-            color: var(--text);
+            color: var(--tx);
+            min-height: 100vh;
             overflow-x: hidden;
+            transition: background .4s, color .4s;
         }
 
-        /* Анимация загрузки */
-        #loader {
+        /* ═══ SPLASH ═══ */
+        #splash {
             position: fixed;
             inset: 0;
-            background: var(--bg);
+            background: #020408;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            z-index: 1000;
+            justify-content: center;
+            z-index: 9999;
+            overflow: hidden;
+            transition: opacity .8s ease, visibility .8s;
         }
 
-        .spinner {
-            width: 60px;
-            height: 60px;
-            border: 3px solid transparent;
-            border-top: 3px solid var(--accent);
+        #splash.out {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* Particles */
+        #pts {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .dot {
+            position: absolute;
             border-radius: 50%;
-            animation: spin 1s infinite linear;
-            box-shadow: 0 0 15px var(--accent-glow);
+            background: var(--acc);
+            opacity: 0;
+            animation: twk var(--d, 3s) ease-in-out infinite var(--dl, 0s);
         }
 
-        @keyframes spin {
+        @keyframes twk {
+
+            0%,
+            100% {
+                opacity: 0;
+                transform: scale(0);
+            }
+
+            50% {
+                opacity: .5;
+                transform: scale(1);
+            }
+        }
+
+        /* Scan line */
+        .scan {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, var(--acc) 40%, var(--acc2) 60%, transparent 100%);
+            opacity: .35;
+            animation: scanAnim 3.5s ease-in-out infinite;
+        }
+
+        @keyframes scanAnim {
+            0% {
+                top: -2px;
+                opacity: .2;
+            }
+
+            50% {
+                opacity: .5;
+            }
+
+            100% {
+                top: 100%;
+                opacity: .2;
+            }
+        }
+
+        /* Corner frames */
+        .fr {
+            position: absolute;
+        }
+
+        .fr::before,
+        .fr::after {
+            content: '';
+            position: absolute;
+            background: var(--acc);
+        }
+
+        .fr-tl {
+            top: 20px;
+            left: 20px;
+        }
+
+        .fr-tl::before {
+            top: 0;
+            left: 0;
+            width: 2px;
+            height: 20px;
+        }
+
+        .fr-tl::after {
+            top: 0;
+            left: 0;
+            width: 20px;
+            height: 2px;
+        }
+
+        .fr-tr {
+            top: 20px;
+            right: 20px;
+        }
+
+        .fr-tr::before {
+            top: 0;
+            right: 0;
+            width: 2px;
+            height: 20px;
+        }
+
+        .fr-tr::after {
+            top: 0;
+            right: 0;
+            width: 20px;
+            height: 2px;
+        }
+
+        .fr-bl {
+            bottom: 20px;
+            left: 20px;
+        }
+
+        .fr-bl::before {
+            bottom: 0;
+            left: 0;
+            width: 2px;
+            height: 20px;
+        }
+
+        .fr-bl::after {
+            bottom: 0;
+            left: 0;
+            width: 20px;
+            height: 2px;
+        }
+
+        .fr-br {
+            bottom: 20px;
+            right: 20px;
+        }
+
+        .fr-br::before {
+            bottom: 0;
+            right: 0;
+            width: 2px;
+            height: 20px;
+        }
+
+        .fr-br::after {
+            bottom: 0;
+            right: 0;
+            width: 20px;
+            height: 2px;
+        }
+
+        /* Core */
+        .lcore {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 20px;
+            width: 100%;
+            max-width: 340px;
+        }
+
+        .orbit {
+            position: relative;
+            width: clamp(80px, 20vw, 108px);
+            height: clamp(80px, 20vw, 108px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 28px;
+        }
+
+        .orbit svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .arc {
+            fill: none;
+            stroke-linecap: round;
+            stroke-dasharray: 65 230;
+            transform-origin: 50% 50%;
+        }
+
+        .a1 {
+            stroke: var(--acc);
+            stroke-width: 2;
+            animation: rot 1.8s linear infinite;
+        }
+
+        .a2 {
+            stroke: var(--acc2);
+            stroke-width: 1.5;
+            animation: rot 2.6s linear infinite reverse;
+            stroke-dasharray: 40 230;
+        }
+
+        .a3 {
+            stroke: rgba(55, 138, 221, 0.2);
+            stroke-width: 1;
+            animation: rot 1.2s linear infinite;
+            stroke-dasharray: 20 230;
+        }
+
+        @keyframes rot {
             to {
                 transform: rotate(360deg);
             }
         }
 
-        /* Контейнер приложения */
-        .dashboard {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px;
+        .ocenter {
+            width: clamp(36px, 9vw, 46px);
+            height: clamp(36px, 9vw, 46px);
+            background: rgba(55, 138, 221, 0.1);
+            border: 1px solid rgba(55, 138, 221, 0.3);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(14px, 3.5vw, 18px);
+            animation: pls 2s ease-in-out infinite;
         }
 
-        header {
+        @keyframes pls {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(55, 138, 221, .3);
+            }
+
+            50% {
+                box-shadow: 0 0 0 10px rgba(55, 138, 221, 0);
+            }
+        }
+
+        .spl-sys {
+            font-size: clamp(9px, 2vw, 11px);
+            letter-spacing: 3px;
+            color: rgba(255, 255, 255, 0.2);
+            margin-bottom: 6px;
+        }
+
+        .spl-ttl {
+            font-size: clamp(18px, 5.5vw, 28px);
+            font-weight: 700;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #e8edf5 0%, #378ADD 50%, #5DCAA5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .spl-sub {
+            font-size: clamp(9px, 2vw, 11px);
+            letter-spacing: 2px;
+            color: var(--mu);
+            margin-bottom: 24px;
+        }
+
+        /* Step log */
+        .slog {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .sli {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: clamp(9px, 2vw, 10px);
+            letter-spacing: 1px;
+            color: #2e3a52;
+            transition: color .3s;
+        }
+
+        .sli.act {
+            color: var(--acc);
+        }
+
+        .sli.done {
+            color: var(--acc2);
+        }
+
+        .slid {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: currentColor;
+            flex-shrink: 0;
+        }
+
+        .sli.act .slid {
+            animation: blp .7s ease-in-out infinite;
+        }
+
+        @keyframes blp {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .2;
+            }
+        }
+
+        /* Progress */
+        .pwrap {
+            width: 100%;
+        }
+
+        .pinfo {
             display: flex;
             justify-content: space-between;
+            font-size: clamp(9px, 2vw, 10px);
+            letter-spacing: 1px;
+            color: var(--mu);
+            margin-bottom: 5px;
+        }
+
+        .ptrack {
+            height: 2px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .pfill {
+            height: 100%;
+            border-radius: 2px;
+            width: 0%;
+            background: linear-gradient(90deg, #378ADD, #5DCAA5);
+            transition: width .4s cubic-bezier(.4, 0, .2, 1);
+        }
+
+        /* ═══ APP ═══ */
+        #app {
+            display: none;
+            opacity: 0;
+        }
+
+        #app.show {
+            display: block;
+            animation: appIn .7s ease forwards;
+        }
+
+        @keyframes appIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        .wrap {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: clamp(16px, 4vw, 36px) clamp(12px, 3vw, 24px);
+        }
+
+        .hdr {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: clamp(14px, 3vw, 26px);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .hdr-l h1 {
+            font-size: clamp(14px, 3.5vw, 20px);
+            font-weight: 700;
+            letter-spacing: 1.5px;
+        }
+
+        .hdr-l h1 span {
+            color: var(--acc);
+        }
+
+        .hdr-l p {
+            font-size: clamp(9px, 1.8vw, 11px);
+            color: var(--mu);
+            margin-top: 4px;
+            letter-spacing: 1.5px;
+        }
+
+        .hdr-r {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
             align-items: center;
-            margin-bottom: 40px;
-            opacity: 0;
-            animation: slideDown 0.8s forwards;
         }
 
-        @keyframes slideDown {
-            from {
-                transform: translateY(-30px);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+        .btn {
+            background: var(--s2);
+            border: 1px solid var(--b);
+            border-radius: 30px;
+            padding: 7px 14px;
+            font-family: var(--f);
+            font-size: clamp(10px, 2vw, 11px);
+            font-weight: 700;
+            color: var(--tx);
+            cursor: pointer;
+            letter-spacing: .5px;
+            white-space: nowrap;
+            transition: border-color .2s, background .2s;
         }
 
-        .grid {
+        .btn:hover {
+            border-color: var(--acc);
+        }
+
+        .btn-a {
+            background: rgba(55, 138, 221, 0.12);
+            border-color: rgba(55, 138, 221, 0.35);
+            color: var(--acc);
+        }
+
+        .btn-a:hover {
+            background: rgba(55, 138, 221, 0.22);
+        }
+
+        /* Stats */
+        .stats {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+            gap: 9px;
+            margin-bottom: clamp(12px, 2.5vw, 20px);
         }
 
-        @media (max-width: 900px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Стиль карточек */
-        .card {
-            background: var(--card-bg);
-            backdrop-filter: var(--glass);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 25px;
+        .sc {
+            background: var(--s1);
+            border: 1px solid var(--b);
+            border-radius: var(--rs);
+            padding: clamp(10px, 2vw, 15px);
             opacity: 0;
-            transform: translateY(30px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(10px);
+            transition: opacity .4s, transform .4s, border-color .25s;
         }
 
-        /* Поочередная анимация появления карточек */
-        .card:nth-child(1) {
-            animation: slideUp 0.6s forwards 0.2s;
+        .sc:hover {
+            border-color: var(--acc);
         }
 
-        .card:nth-child(2) {
-            animation: slideUp 0.6s forwards 0.4s;
+        .sc.in {
+            opacity: 1;
+            transform: none;
         }
 
-        .card:nth-child(3) {
-            animation: slideUp 0.6s forwards 0.6s;
+        .scl {
+            font-size: clamp(9px, 1.8vw, 10px);
+            letter-spacing: 1.5px;
+            color: var(--mu);
+            margin-bottom: 4px;
         }
 
-        @keyframes slideUp {
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+        .scv {
+            font-size: clamp(16px, 3.5vw, 22px);
+            font-weight: 700;
         }
 
-        .card:hover {
-            border-color: var(--accent);
-            box-shadow: 0 0 20px var(--accent-glow);
-            transform: translateY(-5px);
+        /* Sections */
+        .sec {
+            background: var(--s1);
+            border: 1px solid var(--b);
+            border-radius: var(--r);
+            overflow: hidden;
+            margin-bottom: clamp(10px, 2vw, 18px);
+            opacity: 0;
+            transform: translateY(14px);
+            transition: opacity .5s, transform .5s, border-color .25s;
         }
 
-        .full-width {
-            grid-column: 1 / -1;
+        .sec:hover {
+            border-color: rgba(55, 138, 221, 0.25);
         }
 
-        /* Таблица */
-        .table-wrap {
+        .sec.in {
+            opacity: 1;
+            transform: none;
+        }
+
+        .sechd {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: clamp(10px, 2vw, 15px) clamp(12px, 2.5vw, 20px);
+            border-bottom: 1px solid var(--b);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .secttl {
+            font-size: clamp(11px, 2vw, 12px);
+            font-weight: 700;
+            letter-spacing: .5px;
+        }
+
+        .pill {
+            font-size: 10px;
+            color: var(--mu);
+            background: var(--s2);
+            border: 1px solid var(--b);
+            border-radius: 20px;
+            padding: 3px 10px;
+        }
+
+        .fbrs {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .fb {
+            font-size: clamp(9px, 1.8vw, 10px);
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--b);
+            background: transparent;
+            color: var(--mu);
+            font-family: var(--f);
+            cursor: pointer;
+            letter-spacing: .5px;
+            transition: all .2s;
+        }
+
+        .fb.on {
+            border-color: var(--acc);
+            color: var(--acc);
+            background: rgba(55, 138, 221, 0.1);
+        }
+
+        .fb:hover {
+            border-color: var(--acc);
+            color: var(--acc);
+        }
+
+        /* Table */
+        .twrap {
             overflow-x: auto;
-            margin-top: 15px;
+            -webkit-overflow-scrolling: touch;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 600px;
+            min-width: 380px;
+        }
+
+        thead tr {
+            background: var(--s2);
         }
 
         th {
             text-align: left;
-            padding: 15px;
-            color: var(--accent);
-            border-bottom: 1px solid var(--border);
+            padding: clamp(7px, 1.5vw, 10px) clamp(10px, 2vw, 16px);
+            font-size: clamp(9px, 1.8vw, 10px);
+            letter-spacing: 1.5px;
+            color: var(--mu);
+            font-weight: 700;
+            border-bottom: 1px solid var(--b);
+            white-space: nowrap;
         }
 
         td {
-            padding: 15px;
-            border-bottom: 1px solid var(--border);
+            padding: clamp(9px, 1.8vw, 12px) clamp(10px, 2vw, 16px);
+            border-bottom: 1px solid var(--b);
+            font-size: clamp(11px, 2vw, 13px);
         }
 
         tr:last-child td {
-            border: none;
+            border-bottom: none;
         }
 
-        .trend {
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: bold;
+        tbody tr:hover td {
+            background: var(--s2);
+        }
+
+        .sb {
+            font-size: clamp(13px, 2.5vw, 16px);
+            font-weight: 700;
         }
 
         .up {
-            color: var(--up);
-            text-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+            color: var(--upt);
+            font-weight: 700;
         }
 
-        .down {
-            color: var(--down);
-            text-shadow: 0 0 10px rgba(255, 77, 77, 0.4);
+        .dn {
+            color: var(--dnt);
+            font-weight: 700;
         }
 
-        .theme-toggle {
-            background: var(--accent);
-            color: #000;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-family: inherit;
-            font-weight: bold;
-            cursor: pointer;
+        .nu {
+            color: var(--mu);
         }
 
-        h2 {
-            margin: 0 0 20px 0;
-            font-size: 1.2rem;
+        .bt {
+            width: clamp(50px, 10vw, 90px);
+            background: var(--s2);
+            border-radius: 3px;
+            height: 5px;
+            overflow: hidden;
+        }
+
+        .bf {
+            height: 100%;
+            border-radius: 3px;
+            transition: width .8s ease;
+        }
+
+        .bdg {
+            display: inline-block;
+            font-size: clamp(9px, 1.8vw, 10px);
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-weight: 700;
+            letter-spacing: .5px;
+        }
+
+        .btop {
+            background: rgba(59, 109, 17, .2);
+            color: var(--upt);
+            border: 1px solid rgba(59, 109, 17, .4);
+        }
+
+        .bmid {
+            background: rgba(186, 117, 23, .2);
+            color: var(--wnt);
+            border: 1px solid rgba(186, 117, 23, .4);
+        }
+
+        .blow {
+            background: rgba(163, 45, 45, .2);
+            color: var(--dnt);
+            border: 1px solid rgba(163, 45, 45, .4);
+        }
+
+        /* Charts */
+        .cgrid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: clamp(10px, 2vw, 18px);
+            margin-bottom: 0;
+        }
+
+        @media(max-width:580px) {
+            .cgrid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .ci {
+            padding: clamp(10px, 2vw, 16px) clamp(12px, 2.5vw, 20px) clamp(12px, 2vw, 18px);
+        }
+
+        .leg {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .lgi {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 5px;
+            font-size: clamp(9px, 1.8vw, 10px);
+            color: var(--mu);
         }
 
-        h2::before {
-            content: '';
-            width: 4px;
-            height: 20px;
-            background: var(--accent);
+        .lgsq {
+            width: 9px;
+            height: 9px;
             border-radius: 2px;
+        }
+
+        .lgda {
+            width: 14px;
+            border-top: 2px dashed #6b7a99;
+        }
+
+        .cw {
+            position: relative;
+            width: 100%;
+            height: clamp(150px, 22vw, 215px);
+        }
+
+        .cwsm {
+            position: relative;
+            width: 100%;
+            height: clamp(120px, 18vw, 170px);
+        }
+
+        @media(max-width:440px) {
+
+            th:nth-child(4),
+            td:nth-child(4) {
+                display: none;
+            }
         }
     </style>
 </head>
 
 <body>
 
-    <div id="loader">
-        <div class="spinner"></div>
-        <p style="margin-top: 20px; letter-spacing: 2px;">ЗАГРУЗКА ДАННЫХ...</p>
-    </div>
+    <!-- ═══ SPLASH ═══ -->
+    <div id="splash">
+        <div id="pts"></div>
+        <div class="scan"></div>
+        <div class="fr fr-tl"></div>
+        <div class="fr fr-tr"></div>
+        <div class="fr fr-bl"></div>
+        <div class="fr fr-br"></div>
 
-    <div class="dashboard">
-        <header>
-            <div>
-                <h1 style="margin:0; font-size: 1.8rem;">АНАЛИТИКА <span style="color: var(--accent);">2026</span></h1>
-                <p style="opacity: 0.5; font-size: 0.8rem;">Система мониторинга баллов</p>
+        <div class="lcore">
+            <div class="orbit">
+                <svg viewBox="0 0 108 108">
+                    <circle class="arc a1" cx="54" cy="54" r="48" />
+                    <circle class="arc a2" cx="54" cy="54" r="38" />
+                    <circle class="arc a3" cx="54" cy="54" r="28" />
+                </svg>
+                <div class="ocenter">◈</div>
             </div>
-            <button class="theme-toggle" onclick="toggleTheme()">СМЕНИТЬ ТЕМУ</button>
-        </header>
 
-        <div class="grid">
-            <div class="card full-width">
-                <h2>Журнал активности</h2>
-                <div class="table-wrap">
-                    <table id="mainTable">
-                        <thead>
-                            <tr>
-                                <th>Дата</th>
-                                <th>Балл</th>
-                                <th>Статус</th>
-                                <th>Изменение</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
+            <div class="spl-sys">СИСТЕМА МОНИТОРИНГА</div>
+            <div class="spl-ttl">АНАЛИТИКА 2026</div>
+            <div class="spl-sub">ИНИЦИАЛИЗАЦИЯ...</div>
+
+            <div class="slog">
+                <div class="sli" id="sl0">
+                    <div class="slid"></div><span>ПОДКЛЮЧЕНИЕ К СЕРВЕРУ</span>
+                </div>
+                <div class="sli" id="sl1">
+                    <div class="slid"></div><span>ЗАГРУЗКА ДАННЫХ</span>
+                </div>
+                <div class="sli" id="sl2">
+                    <div class="slid"></div><span>ОБРАБОТКА ЗАПИСЕЙ</span>
+                </div>
+                <div class="sli" id="sl3">
+                    <div class="slid"></div><span>ПОСТРОЕНИЕ ГРАФИКОВ</span>
                 </div>
             </div>
 
-            <div class="card">
-                <h2>Динамика роста</h2>
-                <canvas id="lineChart"></canvas>
-            </div>
-
-            <div class="card">
-                <h2>Распределение</h2>
-                <canvas id="pieChart"></canvas>
+            <div class="pwrap">
+                <div class="pinfo"><span id="pct">0%</span><span id="pst">ожидание...</span></div>
+                <div class="ptrack">
+                    <div class="pfill" id="pf"></div>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- ═══ APP ═══ -->
+    <div id="app">
+        <div class="wrap">
+
+            <div class="hdr">
+                <div class="hdr-l">
+                    <h1>АНАЛИТИКА <span>2026</span></h1>
+                    <p>МОНИТОРИНГ БАЛЛОВ — АПРЕЛЬ</p>
+                </div>
+                <div class="hdr-r">
+                    <button class="btn" id="themeBtn" onclick="toggleTheme()">☀ СВЕТЛАЯ</button>
+                        
+                </div>
+            </div>
+
+            <div class="stats" id="statsRow">
+                <div class="sc">
+                    <div class="scl">СРЕДНЕЕ</div>
+                    <div class="scv" id="s1">—</div>
+                </div>
+                <div class="sc">
+                    <div class="scl">МАКСИМУМ</div>
+                    <div class="scv" style="color:var(--upt)" id="s2">—</div>
+                </div>
+                <div class="sc">
+                    <div class="scl">МИНИМУМ</div>
+                    <div class="scv" style="color:var(--dnt)" id="s3">—</div>
+                </div>
+                <div class="sc">
+                    <div class="scl">ЗАПИСЕЙ</div>
+                    <div class="scv" id="s4">—</div>
+                </div>
+                <div class="sc">
+                    <div class="scl">ТРЕНД</div>
+                    <div class="scv" id="s5" style="font-size:13px">—</div>
+                </div>
+            </div>
+
+            <!-- TABLE FIRST -->
+            <div class="sec" id="secT">
+                <div class="sechd">
+                    <div>
+                        <div class="secttl">ЖУРНАЛ АКТИВНОСТИ</div>
+                        <div class="fbrs">
+                            <button class="fb on" id="fa" onclick="setF('all')">ВСЕ</button>
+                            <button class="fb" id="fh" onclick="setF('high')">ТОП 76+</button>
+                            <button class="fb" id="fm" onclick="setF('mid')">НОРМА 51–75</button>
+                            <button class="fb" id="fl" onclick="setF('low')">СЛАБО 0–50</button>
+                        </div>
+                    </div>
+                    <span class="pill" id="tcnt"></span>
+                </div>
+                <div class="twrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ДАТА</th>
+                                <th>БАЛЛ</th>
+                                <th>ИЗМ.</th>
+                                <th>ПРОГРЕСС</th>
+                                <th>СТАТУС</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- LINE CHART -->
+            <div class="sec" id="secL">
+                <div class="sechd">
+                    <div class="secttl">ДИНАМИКА БАЛЛОВ</div>
+                </div>
+                <div class="ci">
+                    <div class="leg">
+                        <span class="lgi"><span class="lgsq" style="background:#378ADD"></span>Баллы</span>
+                        <span class="lgi"><span class="lgda"></span>Среднее</span>
+                    </div>
+                    <div class="cw"><canvas id="lc" role="img" aria-label="Динамика баллов апрель 2026">Данные.</canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PIE + BAR -->
+            <div class="cgrid">
+                <div class="sec" id="secP" style="margin-bottom:0">
+                    <div class="sechd">
+                        <div class="secttl">РАСПРЕДЕЛЕНИЕ</div>
+                    </div>
+                    <div class="ci">
+                        <div class="leg" id="pieLeg"></div>
+                        <div class="cwsm"><canvas id="pc" role="img"
+                                aria-label="Распределение баллов">Категории.</canvas></div>
+                    </div>
+                </div>
+                <div class="sec" id="secB" style="margin-bottom:0">
+                    <div class="sechd">
+                        <div class="secttl">ИЗМЕНЕНИЯ ПО ДНЯМ</div>
+                    </div>
+                    <div class="ci">
+                        <div class="leg">
+                            <span class="lgi"><span class="lgsq" style="background:#3B6D11"></span>Рост</span>
+                            <span class="lgi"><span class="lgsq" style="background:#A32D2D"></span>Спад</span>
+                        </div>
+                        <div class="cwsm"><canvas id="bc" role="img" aria-label="Изменения по дням">Изменения.</canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
     <script>
-        // --- ДАННЫЕ (МЕНЯЙ В КОДЕ ТУТ) ---
-        const myData = [
-            { date: "20 Апр", score: 90 },
-            { date: "21 Апр", score: 93 },
-            { date: "22 Апр", score: 80 },
-            { date: "23 Апр", score: 98 },
-            { date: "24 Апр", score: 10 },
-            { date: "25 Апр", score: 15 },
-            { date: "26 Апр", score: 60 },
-            { date: "27 Апр", score: 75 },
-            { date: "28 Апр", score: 88 }
+        window.myData = [
+            { date: "20 Апр", score: 90 }, { date: "21 Апр", score: 93 }, { date: "22 Апр", score: 80 },
+            { date: "23 Апр", score: 98 }, { date: "24 Апр", score: 10 }, { date: "25 Апр", score: 15 },
+            { date: "26 Апр", score: 60 }, { date: "27 Апр", score: 75 }, { date: "28 Апр", score: 88 }
         ];
 
-        // Имитация загрузки
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const loader = document.getElementById('loader');
-                loader.style.opacity = '0';
-                setTimeout(() => loader.remove(), 500);
-                renderDashboard();
-            }, 1500);
-        });
+        // Particles
+        (() => {
+            const c = document.getElementById('pts');
+            for (let i = 0; i < 70; i++) {
+                const d = document.createElement('div');
+                d.className = 'dot';
+                const sz = Math.random() > 0.7 ? 3 : 2;
+                d.style.cssText = `left:${Math.random() * 100}%;top:${Math.random() * 100}%;width:${sz}px;height:${sz}px;--d:${2 + Math.random() * 4}s;--dl:${Math.random() * 5}s;`;
+                c.appendChild(d);
+            }
+        })();
 
-        function toggleTheme() {
-            document.body.classList.toggle('light-theme');
+        // Loader
+        const STEPS = [
+            { id: 'sl0', txt: 'ПОДКЛЮЧЕНИЕ...' },
+            { id: 'sl1', txt: 'ЗАГРУЗКА ДАННЫХ...' },
+            { id: 'sl2', txt: 'ОБРАБОТКА ЗАПИСЕЙ...' },
+            { id: 'sl3', txt: 'ПОСТРОЕНИЕ ГРАФИКОВ...' }
+        ];
+        let si = 0;
+        function adv() {
+            if (si > 0) document.getElementById(STEPS[si - 1].id).className = 'sli done';
+            if (si < STEPS.length) {
+                document.getElementById(STEPS[si].id).className = 'sli act';
+                document.getElementById('pst').textContent = STEPS[si].txt.toLowerCase();
+                const p = Math.round(((si + 1) / STEPS.length) * 100);
+                document.getElementById('pf').style.width = p + '%';
+                document.getElementById('pct').textContent = p + '%';
+                si++;
+                setTimeout(adv, si < STEPS.length ? 460 : 600);
+            } else {
+                document.getElementById('pst').textContent = 'готово!';
+                setTimeout(launch, 500);
+            }
+        }
+        setTimeout(adv, 350);
+
+        function launch() {
+            document.getElementById('splash').classList.add('out');
+            setTimeout(() => {
+                const app = document.getElementById('app');
+                app.classList.add('show');
+                renderStats(); renderTable(); renderCharts();
+                setTimeout(() => {
+                    document.querySelectorAll('.sc').forEach((c, i) => setTimeout(() => c.classList.add('in'), i * 55));
+                    ['secT', 'secL', 'secP', 'secB'].forEach((id, i) => setTimeout(() => document.getElementById(id).classList.add('in'), 70 + i * 100));
+                }, 60);
+            }, 700);
         }
 
-        function renderDashboard() {
-            const tbody = document.querySelector('#mainTable tbody');
-            let cats = { low: 0, mid: 0, high: 0 };
+        // Theme
+        let light = false;
+        function toggleTheme() {
+            light = !light;
+            document.body.classList.toggle('light', light);
+            document.getElementById('themeBtn').textContent = light ? '☽ ТЁМНАЯ' : '☀ СВЕТЛАЯ';
+        }
 
-            myData.forEach((entry, i) => {
-                let diff = 0;
-                let icon = "◈";
-                let cls = "";
+        // Filter
+        let af = 'all';
+        function setF(f) {
+            af = f;
+            ['fa', 'fh', 'fm', 'fl'].forEach(id => document.getElementById(id).classList.remove('on'));
+            document.getElementById({ all: 'fa', high: 'fh', mid: 'fm', low: 'fl' }[f]).classList.add('on');
+            renderTable();
+        }
 
-                if (i > 0) {
-                    diff = entry.score - myData[i - 1].score;
-                    if (diff > 0) { icon = "▲"; cls = "up"; }
-                    else if (diff < 0) { icon = "▼"; cls = "down"; }
-                }
+        // Stats
+        function renderStats() {
+            const sc = myData.map(d => d.score);
+            const avg = Math.round(sc.reduce((a, b) => a + b, 0) / sc.length);
+            const last = sc[sc.length - 1], prev = sc[sc.length - 2];
+            const tr = last > prev ? '↑ РОСТ' : last < prev ? '↓ СПАД' : '= СТАБ';
+            document.getElementById('s1').textContent = avg;
+            document.getElementById('s2').textContent = Math.max(...sc);
+            document.getElementById('s3').textContent = Math.min(...sc);
+            document.getElementById('s4').textContent = sc.length;
+            const s5 = document.getElementById('s5');
+            s5.textContent = tr;
+            s5.style.color = last > prev ? 'var(--upt)' : last < prev ? 'var(--dnt)' : 'var(--mu)';
+        }
 
-                if (entry.score <= 50) cats.low++;
-                else if (entry.score <= 75) cats.mid++;
-                else cats.high++;
+        // Table
+        function renderTable() {
+            const fd = myData.filter(d => af === 'all' ? true : af === 'high' ? d.score > 75 : af === 'mid' ? (d.score > 50 && d.score <= 75) : d.score <= 50);
+            document.getElementById('tcnt').textContent = fd.length + ' / ' + myData.length;
+            document.getElementById('tbody').innerHTML = fd.map(e => {
+                const i = myData.indexOf(e), df = i > 0 ? e.score - myData[i - 1].score : 0;
+                const ds = i === 0 ? '—' : (df > 0 ? '+' + df : String(df));
+                const dc = df > 0 ? 'up' : df < 0 ? 'dn' : 'nu';
+                const bc = e.score > 75 ? '#3B6D11' : e.score > 50 ? '#BA7517' : '#A32D2D';
+                const bdg = e.score > 75 ? 'btop' : e.score > 50 ? 'bmid' : 'blow';
+                const bl = e.score > 75 ? 'ТОП' : e.score > 50 ? 'НОРМА' : 'СЛАБО';
+                return `<tr><td style="color:var(--mu);font-size:11px">${e.date}</td><td><span class="sb">${e.score}</span></td><td class="${dc}">${ds}</td><td><div class="bt"><div class="bf" style="width:${e.score}%;background:${bc}"></div></div></td><td><span class="bdg ${bdg}">${bl}</span></td></tr>`;
+            }).join('');
+        }
 
-                tbody.innerHTML += `
-                <tr>
-                    <td>${entry.date}</td>
-                    <td><b style="font-size: 1.2rem">${entry.score}</b></td>
-                    <td><span class="trend ${cls}">${icon} ${diff > 0 ? 'РОСТ' : diff < 0 ? 'СПАД' : 'СТАБ'}</span></td>
-                    <td class="${cls}">${diff > 0 ? '+' + diff : diff}</td>
-                </tr>
-            `;
-            });
+        // Charts
+        function renderCharts() {
+            const avg = Math.round(myData.reduce((a, b) => a + b.score, 0) / myData.length);
+            const mono = { size: 10, family: 'JetBrains Mono' };
+            const gc = 'rgba(255,255,255,0.05)', tc = '#6b7a99';
 
-            // График 1
-            const ctxL = document.getElementById('lineChart').getContext('2d');
-            new Chart(ctxL, {
+            new Chart(document.getElementById('lc'), {
                 type: 'line',
                 data: {
                     labels: myData.map(d => d.date),
-                    datasets: [{
-                        label: 'Успеваемость',
-                        data: myData.map(d => d.score),
-                        borderColor: '#00f2ff',
-                        backgroundColor: 'rgba(0, 242, 255, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 5,
-                        borderWidth: 3
-                    }]
+                    datasets: [
+                        { data: myData.map(d => d.score), borderColor: '#378ADD', backgroundColor: 'rgba(55,138,221,0.07)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 5, pointBorderWidth: 2, pointBorderColor: 'rgba(255,255,255,0.5)', pointBackgroundColor: myData.map(d => d.score > 75 ? '#3B6D11' : d.score > 50 ? '#BA7517' : '#A32D2D') },
+                        { data: myData.map(() => avg), borderColor: '#6b7a99', borderWidth: 1.5, borderDash: [5, 4], pointRadius: 0, fill: false }
+                    ]
                 },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' } },
-                        x: { grid: { display: false } }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + c.parsed.y + ' баллов' } } }, scales: { y: { min: 0, max: 110, grid: { color: gc }, ticks: { color: tc, font: mono, stepSize: 25 } }, x: { grid: { display: false }, ticks: { color: tc, font: mono, maxRotation: 30 } } } }
             });
 
-            // График 2
-            new Chart(document.getElementById('pieChart'), {
+            const cats = myData.reduce((a, d) => { d.score <= 50 ? a.l++ : d.score <= 75 ? a.m++ : a.h++; return a; }, { l: 0, m: 0, h: 0 });
+            const pC = ['#A32D2D', '#BA7517', '#3B6D11'], pL = ['Слабо', 'Норма', 'Топ'], pV = [cats.l, cats.m, cats.h];
+            document.getElementById('pieLeg').innerHTML = pL.map((l, i) => `<span class="lgi"><span class="lgsq" style="background:${pC[i]}"></span>${l} ${Math.round(pV[i] / myData.length * 100)}%</span>`).join('');
+            new Chart(document.getElementById('pc'), {
                 type: 'doughnut',
-                data: {
-                    labels: ['0-50 (Слабо)', '51-75 (Норма)', '76-100 (Топ)'],
-                    datasets: [{
-                        data: [cats.low, cats.mid, cats.high],
-                        backgroundColor: ['#ff4d4d', '#ffcc00', '#00ff88'],
-                        borderWidth: 0,
-                        hoverOffset: 20
-                    }]
-                },
-                options: {
-                    cutout: '65%',
-                    plugins: { legend: { position: 'bottom', labels: { color: '#888', font: { family: 'JetBrains Mono' } } } }
-                }
+                data: { labels: pL, datasets: [{ data: pV, backgroundColor: pC, borderWidth: 2, borderColor: 'transparent', hoverOffset: 8 }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { display: false } } }
+            });
+
+            const diffs = myData.map((d, i) => i === 0 ? 0 : d.score - myData[i - 1].score);
+            new Chart(document.getElementById('bc'), {
+                type: 'bar',
+                data: { labels: myData.map(d => d.date), datasets: [{ data: diffs, backgroundColor: diffs.map(v => v >= 0 ? '#3B6D11' : '#A32D2D'), borderRadius: 3, borderSkipped: false }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: gc }, ticks: { color: tc, font: mono } }, x: { grid: { display: false }, ticks: { color: tc, font: mono, autoSkip: false, maxRotation: 30 } } } }
             });
         }
     </script>
-
 </body>
 
 </html>
